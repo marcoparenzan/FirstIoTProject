@@ -6,6 +6,7 @@ using IoTHubMonitoring.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Devices;
 using Microsoft.Extensions.Configuration;
+using Microsoft.WindowsAzure.Storage;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -40,6 +41,37 @@ namespace IoTHubMonitoring.Controllers
             }
 
             return View(list);
+        }
+
+        public async Task<IActionResult> Details(string id)
+        {
+            var dto = new DeviceDetailsDto();
+            dto.DeviceId = id;
+            return View(dto);
+        }
+
+        public async Task<JsonResult> CurrentValue(string id)
+        {
+            var dto = new DeviceCurrentValueDto();
+            dto.DeviceId = id;
+
+            var storageAccount = CloudStorageAccount
+                .Parse(_configuration["StorageConnectionString"]);
+
+            var blobClient = storageAccount.CreateCloudBlobClient();
+
+            var averagesContainer = blobClient.GetContainerReference("averages");
+
+            var blob = averagesContainer.GetBlockBlobReference($"{id}.json");
+
+            var json = await blob.DownloadTextAsync();
+
+            var current = JsonConvert.DeserializeObject<JObject>(json);
+
+            dto.CurrentValue = current.Value<decimal>("Average");
+            dto.Timestamp = current.Value<DateTime>("Timestamp");
+
+            return Json(dto);
         }
     }
 }

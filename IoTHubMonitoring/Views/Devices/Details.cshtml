@@ -1,0 +1,53 @@
+﻿@model IoTHubMonitoring.Models.DeviceDetailsDto
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h2>Details</h2>
+
+<div>
+    <h4>DeviceDetailsDto</h4>
+    <hr />
+    <dl class="dl-horizontal">
+        <dt>
+            @Html.DisplayNameFor(model => model.DeviceId)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.DeviceId)
+        </dd>
+    </dl>
+    <dl class="dl-horizontal">
+        <dt>
+            Current value
+        </dt>
+        <dd id="currentvalue">
+            @(0)
+        </dd>
+    </dl>
+</div>
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+@section Scripts
+{
+    <script type="text/javascript">
+
+        $(function () {
+
+            setInterval(() => {
+
+                var currentValueUrl = '@Url.Action("CurrentValue", new { id = Model.DeviceId })';
+
+                $.getJSON(currentValueUrl, function (response) {
+
+                    $("#currentvalue").html(response.currentValue);
+
+                });
+
+            }, 10000);
+
+        });
+
+    </script>
+}
