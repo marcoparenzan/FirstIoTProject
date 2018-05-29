@@ -53,7 +53,7 @@ namespace IoTHubMonitoring.Controllers
         public async Task<JsonResult> CurrentValue(string id)
         {
             var dto = new DeviceCurrentValueDto();
-            dto.DeviceId = id;
+            dto.DeviceId = id; 
 
             var storageAccount = CloudStorageAccount
                 .Parse(_configuration["StorageConnectionString"]);
