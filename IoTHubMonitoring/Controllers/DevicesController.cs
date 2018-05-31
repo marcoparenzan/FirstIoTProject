@@ -73,5 +73,25 @@ namespace IoTHubMonitoring.Controllers
 
             return Json(dto);
         }
+
+
+        public async Task<JsonResult> LastTenAverages(string id)
+        {
+            var dbContext = new IoTDbContext(_configuration["SqlConnectionString"]);
+            var query = 
+                dbContext
+                .Averages
+                .Where(xx => xx.DeviceId == id)
+                .OrderByDescending(xx => xx.Timestamp)
+                .Take(10)
+                .Select(xx => new {
+                    xx.Timestamp,
+                    xx.Value
+                })
+                ;
+
+            var dto = query.ToList();
+            return Json(dto);
+        }
     }
 }

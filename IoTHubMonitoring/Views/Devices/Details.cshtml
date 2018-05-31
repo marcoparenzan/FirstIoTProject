@@ -27,6 +27,19 @@
     </dl>
 </div>
 <div>
+    <table id="LastTenAverages" class="table table-striped">
+        <thead>
+            <tr>
+                <th class="col-lg-6">Timestamp</th>
+                <th class="col-lg-6">Average</th>
+            </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
+</div>
+<div>
     <a asp-action="Index">Back to List</a>
 </div>
 @section Scripts
@@ -46,6 +59,28 @@
                 });
 
             }, 10000);
+
+            setInterval(() => {
+
+                var lastTenAveragesUrl = '@Url.Action("LastTenAverages", new { id = Model.DeviceId })';
+
+                $.getJSON(lastTenAveragesUrl, function (response) {
+
+                    var tbody = $("#LastTenAverages tbody");
+                    tbody.empty();
+
+                    $(response).each((i, item) => {
+
+                        var row = "<tr><td>" + item.timestamp + "</td><td>" + item.value + "</td></tr>";
+                        tbody.append(row);
+
+                    });
+
+
+                });
+
+            }, 20000);
+
 
         });
 
