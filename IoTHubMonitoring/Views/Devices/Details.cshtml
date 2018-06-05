@@ -25,6 +25,31 @@
             @(0)
         </dd>
     </dl>
+    <dl class="dl-horizontal">
+        <dt>
+            Set point
+        </dt>
+        <dd>
+            @Html.EditorFor(model => model.SetPoint)
+            <a href="#" id="setsetpoint" class="btn btn-primary">Set Set Point</a>
+        </dd>
+    </dl>
+    <dl class="dl-horizontal">
+        <dt>
+            Alarm point
+        </dt>
+        <dd>
+            @Html.EditorFor(model => model.AlarmPoint)
+            <a href="#" id="setalarmpoint" class="btn btn-primary">Set Alarm Point</a>
+        </dd>
+    </dl>
+    <dl class="dl-horizontal">
+        <dt>
+            Alarmed
+        </dt>
+        <dd id="alarm">
+        </dd>
+    </dl>
 </div>
 <div>
     <table id="LastTenAverages" class="table table-striped">
@@ -48,6 +73,44 @@
 
         $(function () {
 
+            $("#setsetpoint").click(function (e) {
+
+                var setPoint = $("[name='SetPoint']").val();
+
+                var url = '@Url.Action("SetSetPoint", new { id = Model.DeviceId })';
+
+                $.ajax({
+                    url: url,
+                    type: 'post',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: 'json',
+                    data: JSON.stringify({
+                        setPoint: setPoint
+                    })
+                });
+
+            });
+
+            
+            $("#setalarmpoint").click(function (e) {
+
+                var alarmPoint = $("[name='AlarmPoint']").val();
+
+                var url = '@Url.Action("SetAlarmPoint", new { id = Model.DeviceId })';
+
+                $.ajax({
+                    url: url,
+                    type: 'post',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: 'json',
+                    data: JSON.stringify({
+                        alarmPoint: alarmPoint
+                    })
+                });
+
+            });
+
+
             setInterval(() => {
 
                 var currentValueUrl = '@Url.Action("CurrentValue", new { id = Model.DeviceId })';
@@ -55,6 +118,7 @@
                 $.getJSON(currentValueUrl, function (response) {
 
                     $("#currentvalue").html(response.currentValue);
+                    $("#alarm").html(response.alarm);
 
                 });
 

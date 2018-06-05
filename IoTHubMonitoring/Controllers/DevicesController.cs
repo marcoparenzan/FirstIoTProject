@@ -47,6 +47,20 @@ namespace IoTHubMonitoring.Controllers
         {
             var dto = new DeviceDetailsDto();
             dto.DeviceId = id;
+
+            var rm = 
+                RegistryManager
+                .CreateFromConnectionString(
+                    _configuration["IoTHubConnectionString"]);
+            var twin = await rm.GetTwinAsync(id);
+            if (twin.Properties.Desired.Contains("SetPoint"))
+            {
+                dto.SetPoint = (decimal)(float)twin.Properties.Desired["SetPoint"];
+            }
+            if (twin.Properties.Desired.Contains("AlarmPoint"))
+            {
+                dto.AlarmPoint = (decimal)(float)twin.Properties.Desired["AlarmPoint"];
+            }
             return View(dto);
         }
 
@@ -71,6 +85,12 @@ namespace IoTHubMonitoring.Controllers
             dto.CurrentValue = current.Value<decimal>("Average");
             dto.Timestamp = current.Value<DateTime>("Timestamp");
 
+            var rm = RegistryManager.CreateFromConnectionString(_configuration["IoTHubConnectionString"]);
+            var twin = await rm.GetTwinAsync(id);
+            if (twin.Properties.Reported.Contains("Alarm"))
+            {
+                dto.Alarm = (bool)twin.Properties.Reported["Alarm"];
+            }
             return Json(dto);
         }
 
@@ -92,6 +112,30 @@ namespace IoTHubMonitoring.Controllers
 
             var dto = query.ToList();
             return Json(dto);
+        }
+
+        public async Task<IActionResult> SetSetPoint(string id, [FromBody] SetSetPointRequest request)
+        {
+            var rm = 
+                RegistryManager
+                .CreateFromConnectionString(
+                    _configuration["IoTHubConnectionString"]);
+            var twin = await rm.GetTwinAsync(id);
+            twin.Properties.Desired["SetPoint"] = request.SetPoint;
+            await rm.UpdateTwinAsync(id, twin, twin.ETag);
+            return Json(new { Success = true });
+        }
+
+        public async Task<IActionResult> SetAlarmPoint(string id, [FromBody] SetAlarmPointRequest request)
+        {
+            var rm =
+                RegistryManager
+                .CreateFromConnectionString(
+                    _configuration["IoTHubConnectionString"]);
+            var twin = await rm.GetTwinAsync(id);
+            twin.Properties.Desired["AlarmPoint"] = request.AlarmPoint;
+            await rm.UpdateTwinAsync(id, twin, twin.ETag);
+            return Json(new { Success = true });
         }
     }
 }

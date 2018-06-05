@@ -1,4 +1,5 @@
 ﻿using Microsoft.Azure.Devices.Client;
+using Microsoft.Azure.Devices.Shared;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -23,9 +24,34 @@ namespace WpfDevice.ViewModels
 
         public DeviceViewModel(string deviceId, DeviceClient client)
         {
-            Task.Run(() =>
+            Task.Run(async () =>
             {
+                var twin = await client.GetTwinAsync();
+                if (twin.Properties.Desired.Contains("SetPoint"))
+                {
+                    _setPoint = (decimal)(float)twin.Properties.Desired["SetPoint"];
+                }
+                if (twin.Properties.Desired.Contains("AlarmPoint"))
+                {
+                    _alarmPoint = (decimal)(float)twin.Properties.Desired["AlarmPoint"];
+                }
+
                 Temperature = _setPoint;
+
+                await client.SetDesiredPropertyUpdateCallbackAsync(async (tc, oc) =>
+                {
+                    if (tc.Contains("SetPoint"))
+                    {
+                        _setPoint = (decimal)(float)tc["SetPoint"];
+                        Temperature = _setPoint;
+                    }
+                    if (tc.Contains("AlarmPoint"))
+                    {
+                        _alarmPoint = (decimal)(float)tc["AlarmPoint"];
+                    }
+                }, null);
+
+                var runningAlarm = false;
 
                 var random = new Random();
                 while (true)
@@ -46,7 +72,25 @@ namespace WpfDevice.ViewModels
                     message.Properties["sampleType"] = "temperature";
                     client.SendEventAsync(message).Wait();
 
+                    if (!runningAlarm && Alarm)
+                    {
+                        // notify Alarm
+                        var tc = new TwinCollection();
+                        tc["Alarm"] = true;
+                        await client.UpdateReportedPropertiesAsync(tc);
+                        runningAlarm = true;
+                    }
+                    else if (runningAlarm && !Alarm)
+                    {
+                        // remove Alarm
+                        var tc = new TwinCollection();
+                        tc["Alarm"] = false;
+                        await client.UpdateReportedPropertiesAsync(tc);
+                        runningAlarm = false;
+                    }
+
                     Task.Delay(1000).Wait();
+
                 }
             });
 
